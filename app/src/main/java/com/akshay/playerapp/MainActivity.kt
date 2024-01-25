@@ -1,9 +1,12 @@
 package com.akshay.playerapp
 
+import android.Manifest.permission.READ_MEDIA_AUDIO
+import android.Manifest.permission.READ_MEDIA_VIDEO
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -12,8 +15,9 @@ import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import androidx.viewpager.widget.ViewPager
+import androidx.viewpager2.widget.ViewPager2
 import com.akshay.playerapp.databinding.ActivityMainBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.io.File
 import java.lang.Exception
 import kotlin.system.exitProcess
@@ -22,41 +26,42 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var toggle: ActionBarDrawerToggle
-
-
-    companion object{
-        lateinit var videoList: ArrayList<Video>
-        lateinit var audioList: ArrayList<Audio>
-        lateinit var folderList: ArrayList<Folder>
-    }
+    private lateinit var viewPager: ViewPager2
+    private lateinit var bottomNavigationView: BottomNavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setTheme(R.style.coolPinkNav)
         setContentView(binding.root)
-
         //for Nav Drawer
         toggle = ActionBarDrawerToggle(this, binding.root, R.string.open, R.string.close)
         binding.root.addDrawerListener(toggle)
         toggle.syncState()
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         if (requestRuntimePermission()){
             folderList = ArrayList()
             videoList = getAllVideos()
             audioList = getAllAudios()
             setFragment(VideoFragment())
         }
-
         setFragment(AudioFragment())
-        binding.bottomNav.setOnItemSelectedListener {
-            when(it.itemId){
+
+//        viewPager = findViewById(R.id.viewPager)
+//        val adapter = ViewPagerAdapter(supportFragmentManager)
+//        viewPager.adapter = adapter
+        bottomNavigationView = findViewById(R.id.bottomNav)
+
+        bottomNavigationView.setOnItemSelectedListener {item->
+            when(item.itemId){
                 R.id.videoView-> setFragment(VideoFragment())
                 R.id.folderView-> setFragment(FolderFragment())
                 R.id.audioView-> setFragment(AudioFragment())
             }
             return@setOnItemSelectedListener true
         }
+
         binding.navView.setNavigationItemSelectedListener {
             when(it.itemId){
                 R.id.feedbackNav-> Toast.makeText(this,"Feedback",Toast.LENGTH_SHORT).show()
@@ -68,14 +73,7 @@ class MainActivity : AppCompatActivity() {
             return@setNavigationItemSelectedListener true
         }
 //        viewPager()
-
     }
-//    private fun viewPager(){
-//        val viewPager: ViewPager = findViewById(R.id.viewPager)
-//        val adapter = MyPagerAdapter(supportFragmentManager)
-//        viewPager.adapter = adapter
-//    }
-
     private fun setFragment(fragment: Fragment){
         val transaction = supportFragmentManager.beginTransaction()
         transaction.replace(R.id.fragmentFL, fragment)
@@ -86,7 +84,7 @@ class MainActivity : AppCompatActivity() {
     //for requesting permission
     private fun requestRuntimePermission(): Boolean{
         if(ActivityCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
-         ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE), 13)
+         ActivityCompat.requestPermissions(this, arrayOf(READ_MEDIA_AUDIO, READ_MEDIA_VIDEO), Build.VERSION_CODES.M)
             return false
         }
         return true
@@ -98,14 +96,13 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 13) {
+        if (requestCode == Build.VERSION_CODES.M) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
             else
-                ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE), 13)
+                ActivityCompat.requestPermissions(this, arrayOf(READ_MEDIA_AUDIO, READ_MEDIA_VIDEO), Build.VERSION_CODES.M)
         }
     }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(toggle.onOptionsItemSelected(item))
             return true
@@ -113,7 +110,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @SuppressLint("Recycle", "Range", "SuspiciousIndentation")
-    private fun getAllVideos(): ArrayList<Video>{
+     fun getAllVideos(): ArrayList<Video>{
         val tempList = ArrayList<Video>()
         val tempFolderList = ArrayList<String>()
         val projection = arrayOf(MediaStore.Video.Media.TITLE, MediaStore.Video.Media.SIZE, MediaStore.Video.Media._ID,
@@ -192,5 +189,9 @@ class MainActivity : AppCompatActivity() {
         cursor?.close()
         return tempList
     }
-
+    companion object{
+        lateinit var videoList: ArrayList<Video>
+        lateinit var audioList: ArrayList<Audio>
+        lateinit var folderList: ArrayList<Folder>
+    }
 }

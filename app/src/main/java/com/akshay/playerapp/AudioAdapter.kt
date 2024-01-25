@@ -19,16 +19,13 @@ class AudioAdapter(private val context: Context, private val audioList: ArrayLis
         val image = binding.audioImg
         val root = binding.root
     }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyHolder {
         return MyHolder(AudioViewBinding.inflate(LayoutInflater.from(context), parent, false))
     }
-
     override fun onBindViewHolder(holder: MyHolder, position: Int) {
         holder.title.text = audioList[position].title
         holder.folder.text = audioList[position].folderName
         holder.duration.text = DateUtils.formatElapsedTime(audioList[position].duration/1000)
-
         Glide.with(context)
             .asBitmap()
             .load(audioList[position].artUri)
@@ -47,11 +44,9 @@ class AudioAdapter(private val context: Context, private val audioList: ArrayLis
             }
         }
     }
-
     override fun getItemCount(): Int {
         return audioList.size
     }
-
     private fun sendIntent(pos: Int, ref: String){
         PlayerActivity.position = pos
         val intent = Intent(context, PlayerActivity::class.java)

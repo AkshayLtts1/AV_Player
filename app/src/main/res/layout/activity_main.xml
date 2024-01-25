@@ -9,8 +9,6 @@
     android:background="@color/white"
     tools:context=".MainActivity">
 
-
-
    <androidx.appcompat.widget.LinearLayoutCompat
        android:layout_width="match_parent"
        android:layout_height="match_parent"
@@ -27,9 +25,7 @@
            android:layout_width="match_parent"
            android:layout_height="0dp"
            android:layout_marginTop="5dp"
-           android:layout_weight="1"
            />
-
        <com.google.android.material.bottomnavigation.BottomNavigationView
            android:id="@+id/bottomNav"
            android:layout_width="match_parent"
@@ -55,6 +51,4 @@
         app:itemTextColor="@color/black"
         app:itemIconTint="@color/cool_pink"
         />
-
-
 </androidx.drawerlayout.widget.DrawerLayout>

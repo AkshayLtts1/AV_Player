@@ -6,13 +6,103 @@
     android:layout_height="match_parent"
     tools:context=".PlayerActivity">
 
-    <com.google.android.exoplayer2.ui.PlayerView
-        android:id="@+id/playerView"
+<!--    <com.google.android.exoplayer2.ui.PlayerView-->
+<!--        android:id="@+id/playerView"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        app:controller_layout_id="@layout/custom_control_view"-->
+<!--        android:keepScreenOn="true"-->
+<!--        />-->
+
+    <org.videolan.libvlc.util.VLCVideoLayout
+        android:id="@+id/libPlayerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:controller_layout_id="@layout/custom_control_view"
-        android:keepScreenOn="true"
+        app:layout_constraintTop_toBottomOf="@+id/topController"
         />
+
+    <androidx.appcompat.widget.AppCompatSeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="60dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:thumb="@null"
+        android:theme="@style/SeekBarTheme"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
+    <ImageButton
+        android:id="@+id/playPauseButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:src="@drawable/pause"
+        app:layout_constraintLeft_toRightOf="@+id/previousButton"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="PlayButton"
+        />
+
+    <ImageButton
+        android:id="@+id/nextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:src="@drawable/skip_next"
+        app:layout_constraintStart_toEndOf="@+id/playPauseButton"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar"
+        android:contentDescription="NextButton"
+        />
+    <ImageButton
+        android:id="@+id/previousButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/previous"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar"
+        app:layout_constraintEnd_toStartOf="@id/playPauseButton"
+        android:contentDescription="PreviousButton"
+        />
+
+    <ImageButton
+        android:id="@+id/fastForwardButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:contentDescription="FastForwardButton"
+        android:gravity="center"
+        android:src="@drawable/fast_forward"
+        app:layout_constraintStart_toEndOf="@+id/nextButton"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar" />
+
+    <ImageButton
+        android:id="@+id/fastRewindButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/fast_rewind"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar"
+        app:layout_constraintEnd_toStartOf="@id/previousButton"
+        android:contentDescription="PreviousButton"
+        />
+
+
+<!--    <org.videolan.libvlc.media.VideoView-->
+<!--        android:id="@+id/playerView1"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        app:controller_layout_id="@layout/custom_control_view"-->
+<!--        android:keepScreenOn="true"-->
+<!--        />-->
     
     <LinearLayout
         android:id="@+id/topController"
@@ -34,6 +124,7 @@
             app:tint="@color/white"/>
         
         <TextView
+            android:id="@+id/videoTitle"
             android:layout_width="8dp"
             android:layout_height="match_parent"
             android:layout_weight="1"

@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-android")
 }
-
 android {
     namespace = "com.akshay.playerapp"
     compileSdk = 34
@@ -10,10 +10,9 @@ android {
     defaultConfig {
         applicationId = "com.akshay.playerapp"
         minSdk = 28
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -42,7 +41,6 @@ android {
 }
 
 dependencies {
-
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
@@ -59,5 +57,5 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-ui:2.19.1")
 
     //for libVLC
-    implementation ("org.videolan.android:libvlc-all:3.4.4")
+    implementation("org.videolan.android:libvlc-all:3.4.4")
 }

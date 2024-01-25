@@ -4,7 +4,14 @@
 
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
+        android:maxSdkVersion="34" />
+
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
+        android:maxSdkVersion="34"
+        />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"
+        android:maxSdkVersion="34"
+        />
 
     <application
         android:allowBackup="true"
@@ -17,10 +24,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PlayerApp"
         tools:targetApi="31">
+
         <activity
             android:name=".PlayerActivity"
-            android:configChanges="uiMode|orientation|screenSize|screenLayout"
-            />
+            android:configChanges="uiMode|orientation|screenSize|screenLayout" />
         <activity
             android:name=".FoldersActivity"
             android:screenOrientation="portrait"
@@ -32,7 +39,6 @@
             tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

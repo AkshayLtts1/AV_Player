@@ -1,25 +1,31 @@
 package com.akshay.playerapp
 
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import com.akshay.playerapp.databinding.ActivityPlayerBinding
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
+import org.videolan.libvlc.MediaPlayer.Event
 import org.videolan.libvlc.util.VLCVideoLayout
+import java.util.concurrent.TimeUnit
 
 
 class PlayerActivity : AppCompatActivity() {
     private val audioList: ArrayList<Audio> = ArrayList()
     private val videoList: ArrayList<Video> = ArrayList()
-    lateinit var binding: ActivityPlayerBinding
-
+    private lateinit var binding: ActivityPlayerBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPlayerBinding.inflate(layoutInflater)
@@ -55,12 +61,23 @@ class PlayerActivity : AppCompatActivity() {
         libVLC = LibVLC(this)
         mediaPlayer = MediaPlayer(libVLC)
         vlcVideoLayout = findViewById(R.id.libPlayerView)
-        val mediaPath = audioList[position].path
-        val media = Media(libVLC, mediaPath)
+        vlcVideoLayout.visibility = View.VISIBLE
+        val mediaPath = audioList[position].artUri
+        val media = Media(libVLC, Uri.parse(mediaPath.toString()))
         mediaPlayer.media = media
         mediaPlayer.play()
         mediaPlayer.attachViews(vlcVideoLayout, null, false, false)
+
+        mediaPlayer.setEventListener { event ->
+            when (event?.type) {
+                Event.EndReached -> {
+                    mediaPlayer.stop()
+                    playNextAudio()
+                }
+            }
+        }
 //        seekBarProgress()
+
     }
     private fun createVideoPlayerLib(){
         binding.videoTitle.text = videoList[position].title
@@ -68,20 +85,34 @@ class PlayerActivity : AppCompatActivity() {
         libVLC = LibVLC(this)
         mediaPlayer = MediaPlayer(libVLC)
         vlcVideoLayout = findViewById(R.id.libPlayerView)
-        val mediaPath = videoList[position].path
-        val media = Media(libVLC, mediaPath)
+        val mediaPath = videoList[position].artUri
+        val media = Media(libVLC, Uri.parse(mediaPath.toString()))
         mediaPlayer.media = media
         mediaPlayer.attachViews(vlcVideoLayout, null, false, false)
         mediaPlayer.play()
+
+        mediaPlayer.setEventListener { event ->
+            when (event?.type) {
+                Event.EndReached -> {
+                    mediaPlayer.stop()
+                    playNextVideo()
+                }
+            }
+        }
     }
 
     private fun setUpCustomControls(){
+        val currentMedia = getCurrentMedia()
+
         val playButton: ImageButton = findViewById(R.id.playPauseButton)
-//        val pauseButton: ImageButton = findViewById(R.id.pauseButton)
         val nextButton: ImageButton = findViewById(R.id.nextButton)
         val previousButton: ImageButton = findViewById(R.id.previousButton)
         val fastForwardButton: ImageButton = findViewById(R.id.fastForwardButton)
         val fastRewindButton: ImageButton = findViewById(R.id.fastRewindButton)
+        val seekBar: SeekBar = findViewById(R.id.seekBar)
+        val currentTime: TextView = findViewById(R.id.currentTimeTv)
+        val totalTime: TextView = findViewById(R.id.totalTimeTv)
+        val playBackSpeed: ImageButton = findViewById(R.id.playBackSpeed)
 
         var buttonVisible = true
         var touchStartTime = 0L
@@ -104,6 +135,9 @@ class PlayerActivity : AppCompatActivity() {
                         previousButton.visibility = if (buttonVisible) View.VISIBLE else View.INVISIBLE
                         fastForwardButton.visibility = if (buttonVisible) View.VISIBLE else View.INVISIBLE
                         fastRewindButton.visibility = if (buttonVisible) View.VISIBLE else View.INVISIBLE
+                        seekBar.visibility = if (buttonVisible) View.VISIBLE else View.INVISIBLE
+                        currentTime.visibility = if (buttonVisible) View.VISIBLE else View.INVISIBLE
+                        totalTime.visibility = if (buttonVisible) View.VISIBLE else View.INVISIBLE
                     }
                 }
             }
@@ -120,6 +154,9 @@ class PlayerActivity : AppCompatActivity() {
                     previousButton.visibility = View.INVISIBLE
                     fastForwardButton.visibility = View.INVISIBLE
                     fastRewindButton.visibility = View.INVISIBLE
+                    seekBar.visibility = View.INVISIBLE
+                    currentTime.visibility = View.INVISIBLE
+                    totalTime.visibility = View.INVISIBLE
                 }, 3000)
             }
             else{
@@ -127,7 +164,6 @@ class PlayerActivity : AppCompatActivity() {
                 playButton.setImageResource(R.drawable.play_icon)
             }
         }
-        val currentMedia = getCurrentMedia()
         nextButton.setOnClickListener {
             if (position >= audioList.size + videoList.size){
                 position = 0
@@ -136,10 +172,26 @@ class PlayerActivity : AppCompatActivity() {
                 if (it is Audio){
                     mediaPlayer.stop()
                     playNextAudio()
+                    if (mediaPlayer.isPlaying){
+                        mediaPlayer.pause()
+                        playButton.setImageResource(R.drawable.play_icon)
+                    }
+                    else{
+                        mediaPlayer.play()
+                        playButton.setImageResource(R.drawable.pause)
+                    }
                 }
                 else if (it is Video){
                     mediaPlayer.stop()
                     playNextVideo()
+                    if (mediaPlayer.isPlaying){
+                        mediaPlayer.pause()
+                        playButton.setImageResource(R.drawable.play_icon)
+                    }
+                    else{
+                        mediaPlayer.play()
+                        playButton.setImageResource(R.drawable.pause)
+                    }
                 }
             }
         }
@@ -158,17 +210,75 @@ class PlayerActivity : AppCompatActivity() {
                 }
             }
         }
-
-        // move forwardButton
+        // move fast forward
         fastForwardButton.setOnClickListener {
             mediaPlayer.time += 10000
         }
-
-        // move backwardButton
+        // fast rewind
         fastRewindButton.setOnClickListener {
             mediaPlayer.time -= 10000
         }
+
+        val handler = Handler(Looper.getMainLooper())
+        val updateSeekBar = object : Runnable{
+            override fun run() {
+                val currentPosition = mediaPlayer.time
+                val totalDuration = mediaPlayer.media?.duration?:0
+                val progress  = (currentPosition.toFloat() / totalDuration!! * 100).toInt()
+                seekBar.progress = progress
+                val durationString = convertToMMSS(totalDuration)
+                val currentPositionString = convertToMMSS(currentPosition)
+//                val durationText = "$currentPositionString / $durationString"
+                currentTime.text = currentPositionString
+                totalTime.text = durationString
+                handler.postDelayed(this, 1000)
+            }
+        }
+        handler.postDelayed(updateSeekBar, 1000)
+        seekBar?.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser){
+                    seekBar?.let {
+                        mediaPlayer.time = calculate(it.progress)
+                        mediaPlayer.play()
+                    }
+                    handler.postDelayed(updateSeekBar, 1000)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                mediaPlayer.pause()
+            }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                mediaPlayer.play()
+
+            }
+        })
+
+        playBackSpeed.setOnClickListener {
+            val speeds = arrayOf(1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f)
+
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Select Plack Speed")
+            builder.setItems(speeds.map { it.toString() }.toTypedArray()){ _, which ->
+                val selectedSpeed = speeds[which]
+                mediaPlayer.rate = selectedSpeed
+            }
+            builder.show()
+        }
     }
+    private fun convertToMMSS(duration: Long): String {
+        val seconds = duration / 1000
+        val minutes = seconds / 60
+        val hours = minutes / 60
+        return String.format("%02d:%02d:%02d", hours, minutes % 60, seconds % 60)
+    }
+
+    private fun calculate(progress: Int): Long{
+        val newPos = progress.toFloat()/100 * mediaPlayer.media?.duration!!
+        return newPos.toLong()
+    }
+
+
     private fun getCurrentMedia(): Any? {
         return if (position < audioList.size) {
             audioList[position]
@@ -218,25 +328,6 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun seekBarProgress(){
-        seekBar = findViewById(R.id.seekBar)
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser){
-                    mediaPlayer.position = progress.toFloat()
-                    mediaPlayer.play()
-                }
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                seekBar?.max!!
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                seekBar?.progress!!
-            }
-        })
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         libVLC.release()
@@ -244,7 +335,6 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     companion object{
-        lateinit var seekBar: SeekBar
         lateinit var playPauseButton: ImageButton
         lateinit var AllPlayerList: ArrayList<Folder>
         lateinit var libVLC: LibVLC
